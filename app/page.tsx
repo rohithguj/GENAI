@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { useState } from "react";
 import { process } from "../env";
 import {
@@ -15,6 +15,7 @@ export default function Home() {
   const [resourceType, setResourceType] = useState("dynamic");
   const [inputValue, setInputValue] = useState("");
   const [resp, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -54,24 +55,32 @@ export default function Home() {
 
   const handleSendButtonClick = async (input: string) => {
     // Handle sending input value
+    setLoading(true);
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
-      resourceType == "dynamic"? "Mixed & Detailed with Videos and Blogs Links": resourceType
-      const prompt = `I want to go to a ${level} and I prefer ${resourceType} kind of learning so generate step wise road plan for me to learn ${inputValue}`;
+      let resourceText = "";
+      if (resourceType == "video") {
+        resourceText = "videos";
+      } else if (resourceType == "text") {
+        resourceText = "Blogs, Textbook snippets and Text";
+      } else {
+        resourceText =
+          "Mixed & Detailed with Videos and Blogs Links and Github Repository";
+      }
+      const prompt = `I want to go to a ${level} and I prefer ${resourceText} kind of learning so generate step wise road plan for me to learn ${inputValue}`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
       const formattedText = formatResponse(text);
-      console.log(text)
+      console.log(text);
       setResponse(formattedText);
     } catch (error) {
       console.error("Error:", error);
       return "Something went wrong. Please try again.";
-    }
-    finally {
+    } finally {
       setInputValue("");
+      setLoading(false);
     }
   };
 
@@ -145,7 +154,14 @@ export default function Home() {
           </div>
         )}
       </div>
-      {resp !== "" && <div dangerouslySetInnerHTML={{ __html: resp }}></div>}
+      {loading && (
+        <div className="flex items-center text-lg md:text-3xl text-gray-300">
+          FIniding optimal Paths...
+        </div>
+      )}
+      {resp !== "" && loading == false && (
+        <div dangerouslySetInnerHTML={{ __html: resp }}></div>
+      )}
 
       <div className="flex items-center">
         <Input
@@ -164,6 +180,7 @@ export default function Home() {
             <Button
               variant="outlined"
               color="inherit"
+              disabled={loading}
               onClick={() => handleSendButtonClick(inputValue)}
             >
               Send
