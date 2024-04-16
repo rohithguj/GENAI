@@ -156,7 +156,7 @@ export default function Home() {
       </div>
       {loading && (
         <div className="flex items-center text-lg md:text-3xl text-gray-300">
-          FIniding optimal Paths...
+          Finding optimal Paths...
         </div>
       )}
       {resp !== "" && loading == false && (
@@ -168,6 +168,7 @@ export default function Home() {
           type="text"
           color="primary"
           value={inputValue}
+          disabled={loading}
           onChange={handleInputChange}
           size="small"
           placeholder="Enter your query..."
