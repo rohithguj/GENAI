@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { process } from "../env";
 import {
   Button,
   ButtonGroup,
@@ -17,7 +16,7 @@ export default function Home() {
   const [resp, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
   const handleLevelChange = (
     event: React.MouseEvent<HTMLElement>,
