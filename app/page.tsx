@@ -49,8 +49,40 @@ export default function Home() {
     return formattedText;
   }
 
+  function formatLinks(text: string) {
+    // Replace links with clickable HTML anchor tags
+    const formattedText = text.replace(
+      /(?:https?|ftp):\/\/[\n\S]+/g,
+      (match) => `<a href="${match}" target="_blank">${match}</a>`
+    );
+
+    return formattedText;
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
+  };
+
+  const handleUseful = async (b: boolean) => {
+    setLoading(true);
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+      const prompt = ` The previous response was ${b} Regenerate Content to better explain the topic ${inputValue} in detail`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      const formattedText = formatResponse(text);
+      const formattedLinks = formatLinks(formattedText); // Format links
+      setResponse(formattedLinks);
+    } catch (error) {
+      console.error("Error:", error);
+      return "Something went wrong. Please try again.";
+    } finally {
+      setInputValue("");
+      setLoading(false);
+    }
   };
 
   const handleSendButtonClick = async (input: string) => {
@@ -65,7 +97,7 @@ export default function Home() {
         resourceText = "Blogs, Textbook snippets and Text";
       } else {
         resourceText =
-          "Mixed & Detailed with Videos and Blogs Links and Github Repository";
+          "Mixed & Detailed with Videos and Blogs Links and Github Repository or any other";
       }
       const prompt = `I want to go to a ${level} and I prefer ${resourceText} kind of learning so generate step wise road plan for me to learn ${inputValue}`;
 
@@ -73,8 +105,8 @@ export default function Home() {
       const response = await result.response;
       const text = response.text();
       const formattedText = formatResponse(text);
-      console.log(text);
-      setResponse(formattedText);
+      const formattedLinks = formatLinks(formattedText); // Format links
+      setResponse(formattedLinks);
     } catch (error) {
       console.error("Error:", error);
       return "Something went wrong. Please try again.";
@@ -83,6 +115,51 @@ export default function Home() {
       setLoading(false);
     }
   };
+
+  function generateVideo(topicName: string) {
+    // Define the endpoint URL
+    const endpointUrl = "/generate-video";
+
+    // Define the request body
+    const requestBody = {
+      topic_name: topicName,
+    };
+
+    // Define request options
+    const requestOptions = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    };
+
+    // Make the network request
+    fetch(endpointUrl, requestOptions)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to generate video");
+        }
+        return response.blob(); // Get video data as Blob
+      })
+      .then((blob) => {
+        // Create a URL for the Blob object
+        const videoUrl = URL.createObjectURL(blob);
+
+        // Create a video element
+        const video = document.createElement("video");
+        video.src = videoUrl;
+        video.controls = true; // Show video controls
+        video.autoplay = true; // Autoplay video
+
+        // Append the video element to a container in the HTML document
+        const container = document.getElementById("video-container");
+        if (container) container.appendChild(video);
+      })
+      .catch((error) => {
+        console.error("Error:", error.message);
+      });
+  }
 
   return (
     <main className="flex flex-col justify-between min-h-screen bg-zinc-800 p-4">
@@ -188,6 +265,28 @@ export default function Home() {
             </Button>
           </ButtonGroup>
         </div>
+        {resp != "" && loading == false && (
+          <div className="pl-4">
+            <ButtonGroup>
+              <Button
+                variant="outlined"
+                color="inherit"
+                disabled={loading}
+                onClick={() => handleUseful(true)}
+              >
+                Usefull
+              </Button>
+              <Button
+                variant="outlined"
+                color="inherit"
+                disabled={loading}
+                onClick={() => handleUseful(false)}
+              >
+                Not usefull
+              </Button>
+            </ButtonGroup>
+          </div>
+        )}
       </div>
     </main>
   );
